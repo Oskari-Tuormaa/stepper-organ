@@ -1,9 +1,13 @@
 #include <array>
+#include <optional>
 #include <stdio.h>
 
+#include "hardware/gpio.h"
 #include "pico/stdio.h"
 #include "pico/time.h"
+#include "pico/types.h"
 
+#include "notes.hpp"
 #include "stepper_ctrl.hpp"
 
 struct TimerCallbackData
@@ -39,20 +43,56 @@ struct StepperData
     { }
 };
 
+constexpr uint ENB = 3;
+constexpr uint IN4 = 4;
+constexpr uint IN3 = 5;
+constexpr uint IN2 = 6;
+constexpr uint IN1 = 7;
+constexpr uint ENA = 8;
+
+struct Note
+{
+    std::optional<uint> freqHz;
+    uint                timeMs;
+    uint                timeAfterMs;
+};
+
+constexpr uint       noteOn    = 500;
+constexpr uint       noteAfter = 500;
+constexpr std::array song { std::to_array<Note>({
+    { C1, noteOn, noteAfter },
+    { D1, noteOn, noteAfter },
+    { Eb1, noteOn, noteAfter },
+    { F1, noteOn, noteAfter },
+    { G1, noteOn, noteAfter },
+    { Eb1, noteOn, noteAfter },
+    { G1, noteOn * 3, noteAfter },
+
+    { Gb1, noteOn, noteAfter },
+    { D1, noteOn, noteAfter },
+    { Gb1, noteOn * 3, noteAfter },
+
+    { F1, noteOn, noteAfter },
+    { Db1, noteOn, noteAfter },
+    { F1, noteOn * 3, noteAfter },
+}) };
+
 int main()
 {
     stdio_init_all();
     printf("Hello, world!\r\n");
 
-    std::array<StepperData, 1> steppers { {
-        { -1000, 1,  2,   3 },
-    } };
+    Stepper stepper(ENA, ENB, IN1, IN2, IN3, IN4);
 
-    for (auto& stepper : steppers)
-    {
-        add_repeating_timer_ms(stepper.delayMs, stepper_callback,
-                               &stepper.cbData, &stepper.timer);
-    }
+    // std::array<StepperData, 1> steppers { {
+    //     { -1000, 1,  2,   3 },
+    // } };
+
+    // for (auto& stepper : steppers)
+    // {
+    //     add_repeating_timer_ms(stepper.delayMs, stepper_callback,
+    //                            &stepper.cbData, &stepper.timer);
+    // }
 
     // TimerCallbackData cbData = { .stepper = stepper };
     // repeating_timer_t timer;
@@ -60,6 +100,20 @@ int main()
 
     while (true)
     {
-        sleep_ms(1000);
+#if 0
+        for (Note note : song)
+        {
+            if (note.freqHz)
+            {
+                stepper.setFreq(note.freqHz.value());
+                stepper.stepFor(note.timeMs);
+            }
+            if (note.timeAfterMs != 0)
+            {
+                sleep_ms(note.timeAfterMs);
+            }
+        }
+#endif
+        sleep_ms(2000);
     }
 }
