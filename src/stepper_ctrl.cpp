@@ -45,7 +45,13 @@ Stepper::Stepper(uint8_t gpioEnableA, uint8_t gpioEnableB, uint8_t gpio1,
 
 void Stepper::setFreq(uint freq)
 {
+    m_currentFreq = freq;
     m_stepDelayUs = 1'000'000 / freq;
+}
+
+uint Stepper::freq()
+{
+    return m_currentFreq;
 }
 
 void Stepper::step()

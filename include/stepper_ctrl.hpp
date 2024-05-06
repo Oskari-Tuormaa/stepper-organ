@@ -12,6 +12,7 @@ public:
             uint8_t gpio2, uint8_t gpio3, uint8_t gpio4);
 
     void setFreq(uint freq);
+    uint freq();
 
     void step();
     void stepN(uint N);
@@ -35,7 +36,8 @@ private:
     uint8_t m_gpio3;
     uint8_t m_gpio4;
 
-    uint64_t m_stepDelayUs { 100 };
+    uint     m_currentFreq { 100 };
+    uint64_t m_stepDelayUs { 10'000 };
 
     bool              m_isRunning { false };
     repeating_timer_t m_timer;
