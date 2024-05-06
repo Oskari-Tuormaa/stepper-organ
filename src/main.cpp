@@ -1,3 +1,4 @@
+#include <array>
 #include <stdio.h>
 
 #include "pico/stdio.h"
@@ -5,6 +6,7 @@
 #include "pico/types.h"
 
 #include "stepper_ctrl.hpp"
+#include "notes.hpp"
 
 constexpr uint ENB = 3;
 constexpr uint IN4 = 4;
@@ -20,16 +22,29 @@ int main()
 
     Stepper stepper(ENA, ENB, IN1, IN2, IN3, IN4);
 
-    uint freq = 100;
+    std::array song {
+        C1,
+        Db1,
+        E1,
+        F1,
+        G1,
+        Ab1,
+        B1,
+        C2,
+    };
+
     while (true)
     {
-        stepper.setFreq(freq);
+        stepper.setFreq(song[0]);
         stepper.start();
-        sleep_ms(1000);
+
+        for (uint note : song)
+        {
+            stepper.setFreq(note);
+            sleep_ms(100);
+        }
 
         stepper.stop();
         sleep_ms(1000);
-
-        stepper.stepFor(1000);
     }
 }

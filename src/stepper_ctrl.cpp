@@ -98,6 +98,7 @@ bool Stepper::isRunning()
 bool Stepper::timerCallback()
 {
     step();
+    m_timer.delay_us = -m_stepDelayUs;
     return m_isRunning;
 }
 
