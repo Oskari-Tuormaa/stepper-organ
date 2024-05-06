@@ -7,10 +7,7 @@
 #include <cstdio>
 
 constexpr std::array<std::array<bool, 4>, 4> sequence {
-    { { 1, 0, 0, 1 },
-      { 0, 1, 0, 1 },
-      { 0, 1, 1, 0 },
-      { 1, 0, 1, 0 } }
+    { { 1, 0, 0, 1 }, { 0, 1, 0, 1 }, { 0, 1, 1, 0 }, { 1, 0, 1, 0 } }
 };
 
 Stepper::Stepper(uint8_t gpioEnableA, uint8_t gpioEnableB, uint8_t gpio1,
@@ -21,7 +18,6 @@ Stepper::Stepper(uint8_t gpioEnableA, uint8_t gpioEnableB, uint8_t gpio1,
     , m_gpio2 { gpio2 }
     , m_gpio3 { gpio3 }
     , m_gpio4 { gpio4 }
-    , m_currentStep { 0 }
 {
     printf("Initializing stepper...\r\n");
 
@@ -54,13 +50,6 @@ void Stepper::setFreq(uint freq)
 
 void Stepper::step()
 {
-    printf("Stepping... ");
-    for (std::size_t i = 0; i < m_currentStep; i++)
-    {
-        printf("  ");
-    }
-    printf("%d\r\n", m_currentStep);
-
     auto [v1, v2, v3, v4] = sequence[m_currentStep];
     m_currentStep         = (m_currentStep + 1) % sequence.size();
 
@@ -68,7 +57,6 @@ void Stepper::step()
     gpio_put(m_gpio2, v2);
     gpio_put(m_gpio3, v3);
     gpio_put(m_gpio4, v4);
-    sleep_us(m_stepDelayUs);
 }
 
 void Stepper::stepN(uint N)
@@ -77,6 +65,7 @@ void Stepper::stepN(uint N)
     for (std::size_t i = 0; i < N; i++)
     {
         step();
+        sleep_us(m_stepDelayUs);
     }
     disable();
 }
@@ -85,6 +74,37 @@ void Stepper::stepFor(uint timeMs)
 {
     uint nSteps = 1000 * timeMs / m_stepDelayUs;
     stepN(nSteps);
+}
+
+void Stepper::start()
+{
+    enable();
+    add_repeating_timer_us(-m_stepDelayUs, Stepper::timerDispatcher, this,
+                           &m_timer);
+    m_isRunning = true;
+}
+
+void Stepper::stop()
+{
+    disable();
+    m_isRunning = false;
+}
+
+bool Stepper::isRunning()
+{
+    return m_isRunning;
+}
+
+bool Stepper::timerCallback()
+{
+    step();
+    return m_isRunning;
+}
+
+bool Stepper::timerDispatcher(repeating_timer_t* timer)
+{
+    Stepper* tthis = static_cast<Stepper*>(timer->user_data);
+    return tthis->timerCallback();
 }
 
 void Stepper::enable()
