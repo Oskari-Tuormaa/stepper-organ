@@ -84,6 +84,10 @@ void Stepper::stepFor(uint timeMs)
 
 void Stepper::start()
 {
+    if (m_isRunning)
+    {
+        return;
+    }
     enable();
     add_repeating_timer_us(-m_stepDelayUs, Stepper::timerDispatcher, this,
                            &m_timer);
@@ -93,6 +97,7 @@ void Stepper::start()
 void Stepper::stop()
 {
     disable();
+    cancel_repeating_timer(&m_timer);
     m_isRunning = false;
 }
 
