@@ -38,6 +38,27 @@ public:
         }
     }
 
+    void start_note_on_channel(uint freq, uint channel)
+    {
+        if (channel >= NStepper)
+        {
+            return;
+        }
+
+        m_steppers[channel].setFreq(freq);
+        m_steppers[channel].start();
+    }
+
+    void end_note_on_channel(uint channel)
+    {
+        if (channel >= NStepper)
+        {
+            return;
+        }
+
+        m_steppers[channel].stop();
+    }
+
 private:
     std::array<Stepper, NStepper> m_steppers;
 };
