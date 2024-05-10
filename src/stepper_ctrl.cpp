@@ -41,6 +41,8 @@ Stepper::Stepper(uint8_t gpioEnableA, uint8_t gpioEnableB, uint8_t gpio1,
 
     gpio_put(m_gpioEnableA, false);
     gpio_put(m_gpioEnableB, false);
+
+    step();
 }
 
 void Stepper::setFreq(uint freq)
@@ -88,14 +90,18 @@ void Stepper::start()
     {
         return;
     }
+    m_isRunning = true;
     enable();
     add_repeating_timer_us(-m_stepDelayUs, Stepper::timerDispatcher, this,
                            &m_timer);
-    m_isRunning = true;
 }
 
 void Stepper::stop()
 {
+    if (!m_isRunning)
+    {
+        return;
+    }
     disable();
     cancel_repeating_timer(&m_timer);
     m_isRunning = false;
