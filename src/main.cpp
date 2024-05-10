@@ -12,12 +12,19 @@
 #include "stepper_ctrl.hpp"
 #include "stepper_pool.hpp"
 
-constexpr uint ENB = 3;
-constexpr uint IN4 = 4;
-constexpr uint IN3 = 5;
-constexpr uint IN2 = 6;
-constexpr uint IN1 = 7;
-constexpr uint ENA = 8;
+constexpr uint ENB_2 = 10;
+constexpr uint IN4_2 = 11;
+constexpr uint IN3_2 = 12;
+constexpr uint IN2_2 = 13;
+constexpr uint IN1_2 = 14;
+constexpr uint ENA_2 = 15;
+
+constexpr uint ENB_1 = 3;
+constexpr uint IN4_1 = 4;
+constexpr uint IN3_1 = 5;
+constexpr uint IN2_1 = 6;
+constexpr uint IN1_1 = 7;
+constexpr uint ENA_1 = 8;
 
 #define UART_ID   uart0
 #define BAUD_RATE 115200
@@ -74,8 +81,10 @@ int main()
 
     uart_set_irq_enables(uart0, true, false);
 
-    Stepper        stepper(ENA, ENB, IN1, IN2, IN3, IN4);
-    StepperPool<1> pool { stepper };
+    Stepper stepper1(ENA_1, ENB_1, IN1_1, IN2_1, IN3_1, IN4_1);
+    Stepper stepper2(ENA_2, ENB_2, IN1_2, IN2_2, IN3_2, IN4_2);
+
+    StepperPool<2> pool { stepper1, stepper2 };
 
     while (true)
     {
