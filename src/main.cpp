@@ -38,27 +38,30 @@ constexpr std::array midiNote {
     4186, 4435, 4699, 4978, 5274,  5588,  5920,  6272, 6645, 7040, 7459, 7902,
     8372, 8870, 9397, 9956, 10548, 11175, 11840, 12544
 };
-uint currentFreq = 0;
 
-StepperPool<1>* pPool;
+struct NoteMsg
+{
+    bool onoff;
+    uint channel;
+    uint freq;
+};
+std::array<NoteMsg, 128> queue;
+uint                     queue_head = 0;
+uint                     queue_tail = 0;
 
 void uart_rx()
 {
     while (uart_is_readable(uart0))
     {
-        uint8_t idx  = uart_getc(uart0);
-        uint    freq = midiNote[idx] / 2;
+        uint8_t onoff   = uart_getc(uart0);
+        uint8_t idx     = uart_getc(uart0);
+        uint8_t channel = uart_getc(uart0);
+        uint    freq    = midiNote[idx];
 
-        if (freq == currentFreq)
-        {
-            pPool->end_note(freq);
-            currentFreq = 0;
-        }
-        else if (currentFreq == 0)
-        {
-            pPool->start_note(freq);
-            currentFreq = freq;
-        }
+        queue[queue_head].onoff   = (onoff == 'O' ? true : false);
+        queue[queue_head].channel = channel;
+        queue[queue_head].freq    = freq;
+        queue_head                = (queue_head + 1) % queue.size();
     }
 }
 
@@ -73,10 +76,59 @@ int main()
 
     Stepper        stepper(ENA, ENB, IN1, IN2, IN3, IN4);
     StepperPool<1> pool { stepper };
-    pPool = &pool;
 
     while (true)
     {
-        sleep_ms(1000);
+#if 1
+        sleep_ms(1);
+
+        if (queue_head != queue_tail)
+        {
+            NoteMsg& msg = queue[queue_tail];
+            queue_tail   = (queue_tail + 1) % queue.size();
+
+#if 0
+            if (msg.onoff)
+            {
+                pool.start_note_on_channel(msg.freq, msg.channel);
+            }
+            else
+            {
+                pool.end_note_on_channel(msg.channel);
+            }
+#else
+            if (msg.onoff)
+            {
+                pool.start_note(msg.freq);
+            }
+            else
+            {
+                pool.end_note(msg.freq);
+            }
+#endif
+        }
+#else
+        pool.start_note(C1);
+        pool.start_note(A2);
+        pool.end_note(C1);
+        sleep_ms(500);
+
+        constexpr std::array melody {
+            C1, D1, E1, F1, 
+            C1, D1, E1, F1,
+            C1, D1, E1, F1,
+            C1, D1, E1, F1,
+        };
+        for (auto freq : melody)
+        {
+            pool.start_note(freq);
+            sleep_ms(100);
+            pool.end_note(freq);
+        }
+        sleep_ms(500);
+
+        pool.end_note(A2);
+        sleep_ms(4000);
+#endif
     }
 }
